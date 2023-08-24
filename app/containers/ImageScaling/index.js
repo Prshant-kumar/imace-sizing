@@ -32,28 +32,6 @@ class ImageScaling extends Component {
       body: data,
     })
       .then(res => {
-        console.log(res);
-        return res.blob();
-      })
-      .then(response => {
-        console.log(response);
-
-        const image = URL.createObjectURL(response);
-        console.log('main', image);
-        return image;
-      });
-  };
-  /// main fun to remove bg and feed to tanuj's api
-  removeBg = e => {
-    console.log(e.target.files[0]);
-    const data = new FormData();
-    data.append('image', e.target.files[0]);
-    fetch(`/api/v2/removeBg`, {
-      method: 'post',
-      body: data,
-    })
-      .then(res => {
-        console.log(res);
         return res.blob();
       })
       .then(response => {
@@ -63,13 +41,12 @@ class ImageScaling extends Component {
         return image;
       })
       .then(img => {
-        const link = document.createElement('a');
         const image = new Image();
 
         image.onload = () => {
           let drawCanvas = document.createElement('canvas');
-          drawCanvas.height = 600;
-          drawCanvas.width = 600;
+          drawCanvas.height = image.height;
+          drawCanvas.width = image.width;
           const ctx = drawCanvas.getContext('2d');
           ctx.drawImage(image, 0, 0);
           let imageArrayData = ctx.getImageData(
@@ -79,8 +56,58 @@ class ImageScaling extends Component {
             drawCanvas.width,
           );
           let dataURL = drawCanvas.toDataURL('image/png', 1);
-          console.log(dataURL);
-          console.log(imageArrayData);
+
+          //   may come handy to get the width
+          //   console.log(imageArrayData);
+
+          const finalImage = new Image();
+          const imageSrc = drawCanvas.toDataURL('image/png', 1);
+          finalImage.src = imageSrc;
+          this.setState({ bgRemovedData: imageSrc });
+          //   this.removeAgain(imageSrc);
+          //   document.body.appendChild(finalImage);
+        };
+
+        image.src = img;
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  };
+  /// main fun to remove bg and feed to tanuj's api
+  removeBg = e => {
+    const data = new FormData();
+    data.append('image', e.target.files[0]);
+    fetch(`/api/v2/removeBg`, {
+      method: 'post',
+      body: data,
+    })
+      .then(res => {
+        return res.blob();
+      })
+      .then(response => {
+        const image = URL.createObjectURL(response);
+        return image;
+      })
+      .then(img => {
+        const link = document.createElement('a');
+        const image = new Image();
+
+        image.onload = () => {
+          let drawCanvas = document.createElement('canvas');
+          drawCanvas.height = image.height;
+          drawCanvas.width = image.width;
+          const ctx = drawCanvas.getContext('2d');
+          ctx.drawImage(image, 0, 0);
+          let imageArrayData = ctx.getImageData(
+            0,
+            0,
+            drawCanvas.height,
+            drawCanvas.width,
+          );
+          let dataURL = drawCanvas.toDataURL('image/png', 1);
+
+          //   console.log(imageArrayData);
 
           const finalImage = new Image();
           const imageSrc = drawCanvas.toDataURL('image/png', 1);
@@ -98,7 +125,6 @@ class ImageScaling extends Component {
   };
   // to capture photo
   takePhoto = () => {
-    console.log(imageCapture);
     imageCapture
       .takePhoto()
       .then(blob => {
@@ -122,7 +148,8 @@ class ImageScaling extends Component {
             drawCanvas.height,
             drawCanvas.width,
           );
-          console.log(imageArrayData);
+          //   console.log(imageArrayData);
+          removeBg(src);
         };
 
         image.src = img;
@@ -188,6 +215,9 @@ class ImageScaling extends Component {
         img.width * ratio,
         img.height * ratio,
       );
+
+    const imageSrc = canvas.toDataURL('image/png', 1);
+    this.removeAgain(imageSrc);
   };
 
   //   for video
@@ -281,7 +311,7 @@ class ImageScaling extends Component {
           </button>
         </div>
         {/* // for masking */}
-        {/* {this.state.bgRemovedData && (
+        {this.state.bgRemovedData && (
           <div
             style={{
               width: '600px',
@@ -290,21 +320,20 @@ class ImageScaling extends Component {
               WebkitMaskImage: `url("${this.state.bgRemovedData}")`,
               maskImage: `${this.state.bgRemovedData}`,
               backgroundColor: `${true ? '#6B37FF' : '#000113'}`,
-              WebkitMaskSize: '100%',
+              WebkitMaskSize: '50%',
               WebkitMaskRepeat: 'no-repeat',
             }}
           >
-            {console.log(this.state.bgRemovedData)}
-            <img
+            {/* <img
               src={this.state.bgRemovedData}
               style={{
                 width: '600px',
                 height: '600px',
                 objectFit: 'contain',
               }}
-            />
+            /> */}
           </div>
-        )} */}
+        )}
         <canvas
           height={200}
           width={200}
