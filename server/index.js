@@ -2,10 +2,14 @@
 
 const express = require('express');
 const logger = require('./logger');
+const request = require('request');
+const bodyParser = require('body-parser');
 
 const argv = require('./argv');
 const port = require('./port');
 const setup = require('./middlewares/frontendMiddleware');
+const fileUpload = require('express-fileupload');
+
 const isDev = process.env.NODE_ENV !== 'production';
 const ngrok =
   (isDev && process.env.ENABLE_TUNNEL) || argv.tunnel
@@ -13,7 +17,7 @@ const ngrok =
     : false;
 const { resolve } = require('path');
 const app = express();
-
+app.use(express.json());
 // If you need a backend, e.g. an API, add your custom backend-specific middleware here
 // app.use('/api', myApi);
 
@@ -34,6 +38,13 @@ app.get('*.js', (req, res, next) => {
   res.set('Content-Encoding', 'gzip');
   next();
 });
+
+app.use(fileUpload());
+
+app.use(bodyParser.json({ limit: '5mb' }));
+app.use(bodyParser.urlencoded({ limit: '100mb', extended: false }));
+
+app.use('/api/v2', require('./api/upload.js'));
 
 // Start your app.
 app.listen(port, host, async err => {
