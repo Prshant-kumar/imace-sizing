@@ -1,5 +1,7 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import { fileToDataURI, formatImage, dataURItoBlob } from 'utils/utils';
+import './style.css';
+const allowedImageTypes = 'image/png,image/jpeg,image/jpg,image/webp';
 
 import image from './1.png';
 
@@ -19,7 +21,9 @@ class ImageScaling extends Component {
   state = {
     bgRemovedData: null,
   };
-  componentDidMount() {}
+  componentDidMount() {
+    this.inputFileRef = React.createRef();
+  }
 
   // can use this to remove bg from base64 image data
   removeAgain = srcData => {
@@ -174,7 +178,7 @@ class ImageScaling extends Component {
 
   onGrabFrameButtonClick = () => {
     imageCapture
-      .grabFrame()
+      .grabFrame(res => res.blob())
       .then(imageBitmap => {
         const canvas = document.querySelector('#grabFrameCanvas');
         this.drawCanvas(canvas, imageBitmap);
@@ -188,7 +192,7 @@ class ImageScaling extends Component {
       .then(blob => createImageBitmap(blob))
       .then(imageBitmap => {
         const canvas = document.querySelector('#takePhotoCanvas');
-        drawCanvas(canvas, imageBitmap);
+        this.drawCanvas(canvas, imageBitmap);
       })
       .catch(error => console.error(error));
   };
@@ -272,44 +276,56 @@ class ImageScaling extends Component {
         }}
       >
         <input
+          ref={this.inputFileRef}
           type="file"
+          accept={allowedImageTypes}
           onChange={e => {
             this.removeBg(e);
           }}
         />
-        click
-        {/* <img src={image} /> */}
-        <div>
-          <button
-            onClick={() => {
-              this.startRecord();
-            }}
-          >
-            Start
-          </button>
-          <button
-            onClick={() => {
-              this.pauseRecord();
-            }}
-          >
-            Pause
-          </button>
-          <video
-            id="video"
-            controls={true}
-            height={200}
-            width={200}
-            style={{ border: '1px solid red' }}
-          />
-        </div>
-        <div>
-          <button onClick={() => this.onGetUserMediaButtonClick()}>
-            Click Start
-          </button>
-          <button onClick={() => this.onGrabFrameButtonClick()}>
-            Click end
-          </button>
-        </div>
+        <button
+          onClick={() => {
+            this.setState({ setShowVideoRecording: true });
+          }}
+        >
+          Take Photo
+        </button>
+
+        {this.state.setShowVideoRecording && (
+          <div>
+            <video
+              id="video"
+              controls={true}
+              autoPlay
+              height={200}
+              width={200}
+              style={{
+                border: '1px solid red',
+                boxShadow: '0 0 10px 10px  rgba(0,0,0,.5)',
+              }}
+            />
+            <div>
+              <button onClick={() => this.onGetUserMediaButtonClick()}>
+                Click Start
+              </button>
+              <button onClick={() => this.onGrabFrameButtonClick()}>
+                Click end
+              </button>
+            </div>
+            <canvas
+              height={200}
+              width={200}
+              id="grabFrameCanvas"
+              style={{ border: '1px solid' }}
+            />
+            <canvas
+              height={200}
+              width={200}
+              id="takePhotoCanvas"
+              style={{ border: '1px solid' }}
+            />
+          </div>
+        )}
         {/* // for masking */}
         {this.state.bgRemovedData && (
           <div
@@ -322,6 +338,9 @@ class ImageScaling extends Component {
               backgroundColor: `${true ? '#6B37FF' : '#000113'}`,
               WebkitMaskSize: '50%',
               WebkitMaskRepeat: 'no-repeat',
+              //   borderRadius: '16px',
+              //   border: '1px solid',
+              //   boxShadow: '0 0 10px 10px  rgba(0,0,0,.5)',
             }}
           >
             {/* <img
@@ -334,18 +353,6 @@ class ImageScaling extends Component {
             /> */}
           </div>
         )}
-        <canvas
-          height={200}
-          width={200}
-          id="grabFrameCanvas"
-          style={{ border: '1px solid' }}
-        />
-        <canvas
-          height={200}
-          width={200}
-          id="takePhotoCanvas"
-          style={{ border: '1px solid' }}
-        />
       </div>
     );
   }
